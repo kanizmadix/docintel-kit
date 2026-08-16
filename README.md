@@ -1,5 +1,7 @@
 # docintel_kit
 
+**[Live overview page →](https://kanizmadix.github.io/docintel-kit/)**
+
 A local-first Python toolkit for unified document processing and analysis: parsing,
 OCR, layout analysis, table extraction, spreadsheet ingestion, structured field
 extraction, LLM tasks (summarization / classification / table QA), and RAG /
