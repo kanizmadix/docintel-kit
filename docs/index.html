@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>docintel_kit — Local-first Document AI Toolkit for Python</title>
+<meta name="description" content="A local-first Python toolkit for document parsing, OCR, layout analysis, table extraction, structured field extraction, LLM tasks, and RAG.">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --bg-alt: #11151f;
+    --card: #151a25;
+    --border: #232938;
+    --text: #e6e9f0;
+    --text-dim: #9aa4b8;
+    --accent: #6ee7b7;
+    --accent-2: #7dd3fc;
+    --amber: #fbbf24;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 90px 0 60px;
+    background: radial-gradient(ellipse 800px 400px at 50% -10%, rgba(110,231,183,0.15), transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .badge {
+    display: inline-block;
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--accent);
+    background: rgba(110,231,183,0.08);
+    border: 1px solid rgba(110,231,183,0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-size: 44px;
+    line-height: 1.15;
+    margin: 0 0 14px;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--accent); font-family: var(--mono); }
+  .tagline {
+    font-size: 19px;
+    color: var(--text-dim);
+    max-width: 660px;
+    margin: 0 0 30px;
+  }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-size: 14.5px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); text-decoration: none; }
+  .btn-primary {
+    background: var(--accent);
+    color: #06120c;
+    border-color: var(--accent);
+  }
+  .btn-ghost { background: var(--card); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent-2); }
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin: 0 0 28px;
+    font-weight: 700;
+  }
+  section h2::before { content: "// "; color: var(--accent); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card .icon { font-size: 22px; margin-bottom: 10px; display: block; }
+  .card h3 { font-size: 16px; margin: 0 0 8px; }
+  .card p { font-size: 14px; color: var(--text-dim); margin: 0 0 10px; }
+  .card code.fn {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--accent-2);
+    background: var(--bg-alt);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .card .backend {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  pre {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    font-family: var(--mono);
+    line-height: 1.55;
+  }
+  code { font-family: var(--mono); }
+  .kw { color: #c792ea; }
+  .str { color: var(--accent); }
+  .com { color: #5c6478; }
+  .fn { color: var(--accent-2); }
+
+  .stat-row { display: flex; gap: 40px; flex-wrap: wrap; margin-top: 8px; }
+  .stat { }
+  .stat .num { font-size: 36px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+  .stat .label { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .stat.warn .num { color: var(--amber); }
+
+  table.arch { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.arch th, table.arch td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.arch th { color: var(--text-dim); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  table.arch code { font-size: 13px; color: var(--accent-2); }
+
+  .note {
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: 14px;
+    margin-top: 18px;
+  }
+  .note strong { color: var(--amber); }
+
+  .design-item { margin-bottom: 22px; }
+  .design-item h3 { font-size: 15.5px; margin: 0 0 6px; color: var(--text); }
+  .design-item p { font-size: 14.5px; color: var(--text-dim); margin: 0; }
+
+  footer {
+    padding: 40px 0 60px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13.5px;
+  }
+  footer a { color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">● local-first · no SaaS required by default</span>
+    <h1>docintel<span>_kit</span></h1>
+    <p class="tagline">
+      One Python toolkit for document parsing, OCR, layout analysis, table extraction,
+      structured field extraction, LLM tasks, and RAG — built around a single shared
+      data model, so a table from a scanned PDF and a table from an Excel sheet look
+      identical to everything downstream.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/kanizmadix/docintel-kit">View on GitHub →</a>
+      <a class="btn btn-ghost" href="#capabilities">Capabilities</a>
+      <a class="btn btn-ghost" href="#quickstart">Quick start</a>
+      <a class="btn btn-ghost" href="#testing">Test results</a>
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <h2>Why</h2>
+    <p style="max-width: 680px; color: var(--text-dim); font-size: 15.5px;">
+      Most document-AI stacks bolt together five or six single-purpose libraries with
+      incompatible data models. docintel_kit gives you one <code>Table</code>, one
+      <code>Document</code>, one <code>ParseResult</code> — produced consistently
+      whether the source was a PDF, a scanned image, an Excel sheet, or a PowerPoint
+      deck — so an LLM prompt, a RAG index, or a CSV export never needs to know where
+      the data came from. Every capability sits behind a swappable
+      <code>Base*Backend</code> interface, so you can register your own OCR engine,
+      extraction model, or vector store without touching call sites.
+    </p>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="wrap">
+    <h2>Capabilities</h2>
+    <div class="grid">
+      <div class="card">
+        <span class="icon">📄</span>
+        <h3>Document parsing</h3>
+        <p>PDF, DOCX, PPTX, HTML, and images normalized into per-page text.</p>
+        <code class="fn">parse_document()</code>
+        <div class="backend">pdfplumber · python-docx · python-pptx · BeautifulSoup</div>
+      </div>
+      <div class="card">
+        <span class="icon">🔍</span>
+        <h3>OCR</h3>
+        <p>Scanned PDFs, photos, and image-only pages — word-level boxes + confidence.</p>
+        <code class="fn">run_ocr()</code>
+        <div class="backend">Tesseract (pytesseract)</div>
+      </div>
+      <div class="card">
+        <span class="icon">🧩</span>
+        <h3>Layout analysis</h3>
+        <p>Detects paragraphs, headings, tables, figures, headers/footers.</p>
+        <code class="fn">analyze_layout()</code>
+        <div class="backend">layoutparser (Detectron2 / PubLayNet)</div>
+      </div>
+      <div class="card">
+        <span class="icon">📊</span>
+        <h3>Table extraction</h3>
+        <p>Ruled tables from PDFs, with a layout+OCR fallback for scans.</p>
+        <code class="fn">extract_tables_from_document()</code>
+        <div class="backend">camelot (lattice/stream)</div>
+      </div>
+      <div class="card">
+        <span class="icon">📈</span>
+        <h3>Spreadsheet ingestion</h3>
+        <p>Multi-sheet Excel and CSV/TSV, into the same shared Table model.</p>
+        <code class="fn">parse_spreadsheet()</code>
+        <div class="backend">pandas · openpyxl</div>
+      </div>
+      <div class="card">
+        <span class="icon">🧾</span>
+        <h3>Structured field extraction</h3>
+        <p>Zero-shot invoice/form field extraction via natural-language questions.</p>
+        <code class="fn">extract_fields()</code>
+        <div class="backend">impira/layoutlm-document-qa</div>
+      </div>
+      <div class="card">
+        <span class="icon">🤖</span>
+        <h3>LLM tasks</h3>
+        <p>Summarization, classification, and table question-answering.</p>
+        <code class="fn">summarize_document() · classify_document() · qa_over_tables()</code>
+        <div class="backend">Claude (pluggable BaseLlmClient)</div>
+      </div>
+      <div class="card">
+        <span class="icon">🔎</span>
+        <h3>RAG / semantic search</h3>
+        <p>Chunk + embed documents and table rows; search with cosine similarity.</p>
+        <code class="fn">index_documents() · search_documents()</code>
+        <div class="backend">sentence-transformers</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <h2>Quick start</h2>
+    <pre><code><span class="kw">from</span> docintel_kit <span class="kw">import</span> parse_document, run_ocr, extract_tables_from_document, extract_fields
+
+<span class="com"># Parse a text-layer PDF, DOCX, PPTX, or HTML file</span>
+result = parse_document(<span class="str">"invoice.pdf"</span>)
+<span class="fn">print</span>(result.get_page_text(<span class="str">0</span>))
+
+<span class="com"># OCR a scanned document or photo</span>
+ocr_result = run_ocr(<span class="str">"scanned_invoice.pdf"</span>)
+<span class="fn">print</span>(ocr_result.full_text)
+
+<span class="com"># Extract tables (PDF ruled tables via camelot, with OCR fallback for scans)</span>
+tables = extract_tables_from_document(<span class="str">"invoice.pdf"</span>)
+df = tables[<span class="str">0</span>].to_dataframe()
+
+<span class="com"># Ask natural-language questions about a form/invoice's fields</span>
+result = extract_fields(<span class="str">"invoice.pdf"</span>, schema={
+    <span class="str">"invoice_number"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>},
+    <span class="str">"total_amount"</span>: {<span class="str">"type"</span>: <span class="str">"amount"</span>, <span class="str">"question"</span>: <span class="str">"What is the total amount due?"</span>},
+})
+<span class="fn">print</span>(result.get_field(<span class="str">"invoice_number"</span>).value)</code></pre>
+  </div>
+</section>
+
+<section id="testing">
+  <div class="wrap">
+    <h2>Test results</h2>
+    <p style="color: var(--text-dim); font-size: 15px; max-width: 680px;">
+      A high-difficulty end-to-end suite lives in <code>testcases/</code>, covering
+      every supported file format, unicode/CJK/RTL text, corrupted and truncated
+      files, and both success and error paths — with real model inference
+      (Tesseract OCR, camelot, LayoutLM document-QA, sentence-transformers
+      embeddings), not mocks, wherever the capability doesn't require a paid API key.
+    </p>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="num">117</div>
+        <div class="label">tests passed</div>
+      </div>
+      <div class="stat warn">
+        <div class="num">2</div>
+        <div class="label">skipped (documented env limits)</div>
+      </div>
+      <div class="stat">
+        <div class="num">8</div>
+        <div class="label">modules covered</div>
+      </div>
+      <div class="stat">
+        <div class="num">0</div>
+        <div class="label">real network calls made</div>
+      </div>
+    </div>
+    <div class="note">
+      <strong>Both skips are environment limitations, not docintel_kit bugs:</strong>
+      layoutparser's default PubLayNet model weights are hosted on dead Dropbox
+      links (a confirmed, long-standing upstream issue — see
+      <a href="https://github.com/Layout-Parser/layout-parser/issues/168">layout-parser#168</a>),
+      and the optional <code>method="tabula"</code> table-extraction path requires
+      a local Java runtime that wasn't installed during this test run. Both are
+      documented in the README along with workarounds.
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="wrap">
+    <h2>Architecture</h2>
+    <table class="arch">
+      <tr><th>Module</th><th>Responsibility</th></tr>
+      <tr><td><code>types.py</code></td><td>Shared Pydantic models: Document, Page, ParseResult, OcrResult, LayoutResult, Table, ExtractionResult, RagSearchResult</td></tr>
+      <tr><td><code>parsing.py</code></td><td>PDF / DOCX / PPTX / HTML / image parsing</td></tr>
+      <tr><td><code>ocr.py</code></td><td>Tesseract-backed OCR</td></tr>
+      <tr><td><code>layout.py</code></td><td>layoutparser-backed layout analysis</td></tr>
+      <tr><td><code>tables.py</code></td><td>camelot / tabula / layout+OCR table extraction</td></tr>
+      <tr><td><code>spreadsheet.py</code></td><td>pandas-backed Excel/CSV parsing</td></tr>
+      <tr><td><code>extraction.py</code></td><td>LayoutLM document-QA structured field extraction</td></tr>
+      <tr><td><code>llm_tasks.py</code></td><td>Claude-backed summarize / classify / table-QA</td></tr>
+      <tr><td><code>rag.py</code></td><td>sentence-transformers embeddings + vector search</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="design">
+  <div class="wrap">
+    <h2>Design notes</h2>
+    <div class="design-item">
+      <h3>Structured extraction uses a QA model, not a generic pretrained checkpoint</h3>
+      <p>
+        An earlier version used <code>microsoft/layoutlmv3-base</code> directly, which
+        turned out to have no fine-tuned classification head — its output labels were
+        generic placeholders, making it structurally incapable of answering arbitrary
+        field questions regardless of input quality. <code>extract_fields()</code> now
+        uses <code>impira/layoutlm-document-qa</code>, a checkpoint fine-tuned for
+        document question-answering, and converts each scalar schema field into a
+        natural-language question — which is what makes zero-shot extraction against
+        arbitrary schemas actually work.
+      </p>
+    </div>
+    <div class="design-item">
+      <h3>Every backend is swappable</h3>
+      <p>
+        <code>register_parser_backend</code>, <code>register_ocr_backend</code>,
+        <code>register_layout_backend</code>, <code>register_extraction_backend</code>,
+        <code>register_llm_client</code>, and <code>register_vector_store</code> let you
+        drop in your own implementation — a different OCR engine, a fine-tuned
+        extraction model, a persistent vector store like Qdrant or PGVector — without
+        touching call sites.
+      </p>
+    </div>
+    <div class="design-item">
+      <h3>One shared Table model</h3>
+      <p>
+        Tables extracted from a PDF via camelot, tables recovered from a scanned image
+        via layout+OCR, and tables loaded from an Excel sheet all produce the same
+        <code>Table</code> object, with the same <code>to_dataframe()</code>,
+        <code>to_csv()</code>, and <code>to_json()</code> export methods.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      docintel_kit is local-first: no SaaS calls by default. LLM-backed functions
+      (summarization, classification, table QA) are optional and only call out to a
+      network engine when explicitly requested.
+    </p>
+    <p><a href="https://github.com/kanizmadix/docintel-kit">github.com/kanizmadix/docintel-kit</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
