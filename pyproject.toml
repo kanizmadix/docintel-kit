@@ -1,15 +1,32 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "docintel_kit"
+name = "doc-intel-kit"
 version = "0.1.0"
-description = "Unified local document parsing, OCR, layout analysis, table extraction, structured extraction, LLM tasks, and RAG toolkit."
+description = "Composable document parsing, OCR, table extraction, structured extraction, LLM tasks, and in-memory RAG for Python."
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
-license = { text = "MIT" }
-authors = [{ name = "Your Name" }]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Kanishk S" }]
+keywords = [
+    "document-ai",
+    "document-processing",
+    "ocr",
+    "table-extraction",
+    "rag",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: General",
+]
 
 dependencies = [
     "pydantic>=2.6,<3.0",
@@ -33,10 +50,19 @@ dependencies = [
 
 [project.optional-dependencies]
 tabula = ["tabula-py>=2.9,<2.10"]
-easyocr = ["easyocr>=1.7,<1.8"]
-paddleocr = ["paddleocr>=2.7,<2.8"]
-torch = ["torch>=2.3,<2.4"]
-dev = ["pytest>=8.2,<8.3", "mypy>=1.10,<1.11"]
+dev = [
+    "build>=1.2,<2.0",
+    "mypy>=1.10,<1.11",
+    "pytest>=8.2,<8.3",
+    "reportlab>=4.2,<4.3",
+    "twine>=5.1,<7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/kanizmadix/docintel-kit"
+Documentation = "https://kanizmadix.github.io/docintel-kit/"
+Source = "https://github.com/kanizmadix/docintel-kit"
+Issues = "https://github.com/kanizmadix/docintel-kit/issues"
 
 [tool.setuptools.packages.find]
 include = ["docintel_kit*"]

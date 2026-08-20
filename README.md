@@ -1,149 +1,183 @@
-# docintel_kit
+# doc-intel-kit
 
-**[Live overview page →](https://kanizmadix.github.io/docintel-kit/)**
+[![CI](https://github.com/kanizmadix/docintel-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/kanizmadix/docintel-kit/actions/workflows/ci.yml)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB.svg)](https://www.python.org/downloads/release/python-3110/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-34d399.svg)](LICENSE)
 
-A local-first Python toolkit for unified document processing and analysis: parsing,
-OCR, layout analysis, table extraction, spreadsheet ingestion, structured field
-extraction, LLM tasks (summarization / classification / table QA), and RAG /
-semantic search — all behind one consistent set of shared data types.
+**[Try the no-key interactive showcase](https://kanizmadix.github.io/docintel-kit/)**
 
-No SaaS calls are required by default. Everything runs on your own machine except
-the LLM-backed functions (`summarize_document`, `classify_document`, `qa_over_tables`),
-which are optional and only call out to a network engine (e.g. Claude) when you
-explicitly ask for one.
+`doc-intel-kit` is a composable Python 3.11 toolkit for turning documents into shared, typed representations. It connects text-layer parsing, Tesseract OCR, PDF table extraction, spreadsheet ingestion, schema-driven field extraction, optional Claude tasks, and small-scale semantic search without hiding the underlying backends.
 
-## Why
+The distribution name is `doc-intel-kit`; the Python import remains `docintel_kit`.
 
-Most document-AI stacks bolt together five or six single-purpose libraries with
-incompatible data models. docintel_kit gives you one `Table`, one `Document`, one
-`ParseResult` — produced consistently whether the source was a PDF, a scanned image,
-an Excel sheet, or a PowerPoint deck — so downstream code (an LLM prompt, a RAG
-index, a CSV export) never needs to know where the data came from.
+## Why use it?
 
-## Capabilities
+Document workflows often glue together libraries that disagree about pages, coordinates, tables, and metadata. This project provides common Pydantic models such as `Document`, `ParseResult`, `OcrResult`, and `Table`, while keeping every capability independently callable and exposing registration hooks for parser, OCR, layout, extraction, LLM, and vector-store backends. That makes it useful for prototypes, evaluations, and as a typed integration layer—not as a claim of one-click, production-grade document automation.
 
-| Capability | Function | Backend |
+> **Why this toolkit?** It gives developers a composable, local-first Python integration layer with shared typed models across parsing, OCR, tables, extraction, optional LLM tasks, and small-scale RAG—without requiring a cloud document platform or hiding each backend behind one automatic pipeline.
+
+**Best for:** teams combining local document libraries, projects that need inspectable intermediate results, privacy-sensitive prototypes, custom backend evaluations, and applications that want one typed contract while retaining control of routing, persistence, quality thresholds, and infrastructure.
+
+## How it compares
+
+This is a scope comparison, not a claim that the projects are interchangeable or that `doc-intel-kit` is universally better.
+
+| Alternative | Stronger when you need | Why use `doc-intel-kit` instead |
 |---|---|---|
-| Parsing (PDF/DOCX/PPTX/HTML/images) | `parse_document()` | pdfplumber, python-docx, python-pptx, BeautifulSoup |
-| OCR | `run_ocr()` | Tesseract (pytesseract) |
-| Layout analysis | `analyze_layout()` | layoutparser (Detectron2 / PubLayNet)* |
-| Table extraction (PDF/scanned) | `extract_tables_from_document()` | camelot, with layout+OCR fallback |
-| Spreadsheet/CSV parsing | `parse_spreadsheet()` | pandas |
-| Structured field extraction | `extract_fields()` | Hugging Face `impira/layoutlm-document-qa` |
-| Summarization / classification / table QA | `summarize_document()`, `classify_document()`, `qa_over_tables()` | Claude (pluggable) |
-| RAG / semantic search | `index_documents()`, `search_documents()` | sentence-transformers + in-memory vector store |
+| [Docling](https://docling-project.github.io/docling/) | Mature multi-format conversion, advanced PDF understanding, a unified document model, rich exports, CLI/server options, and broad ecosystem integrations. | You want smaller independently callable Python capabilities and shared Pydantic contracts while explicitly choosing parsing, OCR, tables, extraction, LLM, and RAG branches. |
+| [Unstructured](https://docs.unstructured.io/open-source/core-functionality/overview) | A broad partition/chunk/clean/stage pipeline plus ingestion and destination connectors for production data preparation. | You need a compact SDK for direct local composition and typed document/table/OCR results rather than a connector-oriented ingestion platform. |
+| [LlamaParse](https://developers.llamaindex.ai/python/cloud/llamaparse/) | Hosted agentic OCR, complex layout/chart parsing, many formats, structured extraction, indexing, and production document-agent services. | You prefer local execution for core parsing/OCR/table paths, no required service account for those paths, and control over each underlying backend. |
+| [Amazon Textract](https://docs.aws.amazon.com/textract/latest/dg/what-is.html) | Managed extraction of text, handwriting, forms, tables, queries, signatures, confidence, and geometry at AWS scale. | You want cloud-neutral Python components, local Tesseract/Camelot paths, and a shared model that can accept custom backends without uploading core documents to AWS. |
+| [Azure Document Intelligence](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/) | Managed prebuilt/custom document models, key-value/table/layout extraction, cloud operations, and Azure integration. | You want an infrastructure-neutral integration layer and direct ownership of local execution, routing, storage, and model choices. |
+| [Google Document AI](https://docs.cloud.google.com/document-ai/docs) | Managed processors that transform documents into structured data with Google Cloud operations and specialized processors. | You need a lightweight Python toolkit for explicit local branches and prototypes that are not committed to a cloud document-processing platform. |
 
-Every capability is behind a `Base*Backend` abstract class, so you can register your
-own implementation (a different OCR engine, a fine-tuned extraction model, a
-persistent vector store) without touching call sites — see `register_*_backend()`
-in each module.
+**Not a replacement for:** production ingestion connectors, managed autoscaling, human-review queues, mature layout models, enterprise governance, persistent vector infrastructure, or service-level guarantees. Docling and Unstructured are broader open-source systems; LlamaParse and hyperscaler services are more complete managed offerings. `doc-intel-kit` is intentionally a transparent integration toolkit, and its current layout, first-page extraction, and in-memory RAG limitations are documented below.
 
-\* See [Known limitations](#known-limitations) — layoutparser's default model
-hosting is currently broken upstream.
+> Comparison content is paraphrased from the linked official documentation for clarity and licensing compliance. Capabilities and commercial offerings evolve; verify current vendor documentation before choosing a production platform.
 
-## Install
+## Capability status
 
-Requires Python 3.11.
+| Capability | API | Status | What is actually provided |
+|---|---|---:|---|
+| PDF, DOCX, PPTX, HTML parsing | `parse_document()` | Supported | Native text extraction into logical pages. Image inputs return an empty page plus an OCR warning. |
+| Image/scanned-PDF OCR | `run_ocr()` | Supported | Tesseract word text, confidence, and pixel-space boxes. |
+| `.xlsx`, `.xlsm`, CSV, TSV ingestion | `parse_spreadsheet()` | Supported | One shared `Table` per sheet/file. Legacy `.xls` is **not** supported. |
+| Native PDF tables | `extract_tables_from_document()` | Supported with caveats | Camelot lattice/stream; optional Tabula path. Scanned fallback depends on experimental layout. |
+| Layout detection | `analyze_layout()` | Experimental / currently blocked by upstream model hosting | PubLayNet Text, Title, List, Table, and Figure regions when compatible local weights are supplied. |
+| Structured scalar extraction | `extract_fields()` | Experimental | LayoutLM document QA over OCR words; scalar answers currently use only page 1. |
+| Semantic search / RAG | `index_documents()`, `search_documents()` | Experimental | Sentence-transformer embeddings and a process-local, in-memory vector store. |
+| LLM tasks | `summarize_document()`, `classify_document()`, `qa_over_tables()` | Optional | Claude is the only built-in network client. Custom providers require implementing and registering `BaseLlmClient`. |
 
-```bash
-pip install -e .
+EasyOCR and PaddleOCR backends are not implemented. The registry interfaces make alternative backends possible, but installing another OCR library alone does not register it.
+
+## Architecture and real execution flow
+
+The library exposes building blocks; your application chooses and orchestrates the branches. It does **not** automatically run every stage end to end.
+
+```text
+Input path / bytes
+       |
+       +--> parse_document() ------> ParseResult --------+--> your application
+       |                                                 |
+       +--> run_ocr() -------------> OcrResult           +--> index_documents()
+       |        (images/scans)                           |       |
+       +--> parse_spreadsheet() ----> list[Table] --------+       v
+       |                                                 |   in-memory vectors
+       +--> extract_tables_from_document() -> list[Table]+       |
+       |                                                         v
+       +--> extract_fields() -> ExtractionResult             search_documents()
+
+Parsed text or Tables --explicit call--> Claude task --network + API key--> result
 ```
 
-System binaries needed by some capabilities (not pip-installable):
+Parsing does not automatically OCR empty pages. OCR does not automatically feed extraction. RAG indexing parses native text and does not OCR scans. Compose those steps explicitly when your workflow needs them.
 
-- **Tesseract OCR** — required for `run_ocr()`. `brew install tesseract` (macOS) or see the [Tesseract docs](https://github.com/tesseract-ocr/tesseract).
-- **Ghostscript** — required for `extract_tables_from_document()` (camelot). `brew install ghostscript`.
-- **Poppler** — required for PDF-to-image rasterization (`pdf2image`, used by OCR/layout/extraction on PDFs). `brew install poppler`.
-- **Java (JRE)** — only needed for the optional `method="tabula"` path in table extraction; the default `camelot` path does not need it.
+## Installation
 
-## Quick start
+Python **3.11** is required. The initial release intentionally does not claim Python 3.12+ support.
+
+```bash
+pip install doc-intel-kit
+```
+
+For the optional Java-backed Tabula path:
+
+```bash
+pip install "doc-intel-kit[tabula]"
+```
+
+For a source checkout:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+```
+
+### System dependencies
+
+Some Python packages wrap local executables that pip cannot install:
+
+- **Tesseract OCR**: required by `run_ocr()` and the default extraction path.
+- **Poppler**: required to rasterize PDF pages for OCR, layout, and structured extraction.
+- **Ghostscript**: required by Camelot's lattice table path on common installations.
+- **Java JRE**: required only for `method="tabula"`.
+- **Detectron2 plus compatible local weights**: required by the default LayoutParser backend; Detectron2 is not distributed by this package.
+
+On macOS, the common binaries are available with `brew install tesseract poppler ghostscript`. On Debian/Ubuntu, use `sudo apt-get install tesseract-ocr poppler-utils ghostscript`.
+
+## Quickstart
 
 ```python
-from docintel_kit import parse_document, run_ocr, extract_tables_from_document, extract_fields
+from docintel_kit import parse_document
+from docintel_kit.spreadsheet import parse_spreadsheet
 
-# Parse a text-layer PDF, DOCX, PPTX, or HTML file
-result = parse_document("invoice.pdf")
-print(result.get_page_text(0))
+# Fast native-text path: no API key and no model download.
+parsed = parse_document("report.pdf")
+print(parsed.get_page_text(0))
 
-# OCR a scanned document or photo
-ocr_result = run_ocr("scanned_invoice.pdf")
-print(ocr_result.full_text)
-
-# Extract tables (PDF ruled tables via camelot, with OCR fallback for scans)
-tables = extract_tables_from_document("invoice.pdf")
-df = tables[0].to_dataframe()
-
-# Ask natural-language questions about a form/invoice's fields
-result = extract_fields("invoice.pdf", schema={
-    "invoice_number": {"type": "string"},
-    "total_amount": {"type": "amount", "question": "What is the total amount due?"},
-})
-print(result.get_field("invoice_number").value)
+# Spreadsheet ingestion uses the same Table model as PDF extraction.
+tables = parse_spreadsheet("forecast.xlsx")
+print(tables[0].headers)
+print(tables[0].to_dataframe().head())
 ```
 
-## Testing
+OCR and table extraction are explicit branches:
 
-A high-difficulty end-to-end test suite lives in `testcases/`, covering every
-supported file format, unicode/CJK/RTL text, corrupted/truncated files, and both
-success and error paths — with real model inference (Tesseract OCR, camelot,
-LayoutLM-based QA, sentence-transformers embeddings), not mocks, wherever the
-capability doesn't require a paid API key.
+```python
+from docintel_kit import run_ocr, extract_tables_from_document
 
-```bash
-pip install pytest reportlab
-pytest testcases/ -v
+ocr = run_ocr("scanned-invoice.pdf")
+print(ocr.full_text)
+
+pdf_tables = extract_tables_from_document("text-layer-invoice.pdf")
+if pdf_tables:
+    print(pdf_tables[0].to_csv())
 ```
 
-As of the last full run: **117 passed, 2 skipped**. Both skips are documented,
-environment-level limitations (see below), not docintel_kit bugs.
+Small in-memory RAG is also explicit:
+
+```python
+from docintel_kit import index_documents, search_documents
+
+index_documents(["report.pdf"], collection="demo")
+hits = search_documents("What changed in revenue?", collection="demo", top_k=3)
+for hit in hits.matches:
+    print(hit.score, hit.chunk.text)
+```
+
+## Keys, network use, and model downloads
+
+- Importing the package, native parsing, spreadsheet ingestion, Tesseract OCR, and Camelot extraction do not require an API key.
+- Calling a built-in Claude task without `ANTHROPIC_API_KEY` raises before an HTTP request is made. Set the variable only when you intentionally use those functions; never commit keys.
+- `extract_fields()` lazily downloads `impira/layoutlm-document-qa` from Hugging Face on first use unless it is already cached.
+- RAG lazily downloads `sentence-transformers/all-MiniLM-L6-v2` on first embedding request unless cached.
+- The default layout backend attempts to obtain PubLayNet artifacts, but the upstream links are currently unavailable. Use trusted local config/weights or register a different backend.
+
+Consequently, the toolkit is local-execution-oriented but does **not** promise a no-network default for every capability. Cache model artifacts ahead of time for controlled or offline environments and verify their licenses and provenance.
 
 ## Known limitations
 
-- **`analyze_layout()`'s default backend is currently broken upstream.**
-  layoutparser's built-in PubLayNet model zoo downloads its Detectron2 weights
-  from Dropbox share links that now return "File Deleted" pages instead of the
-  actual files (a long-standing, unresolved issue —
-  see [Layout-Parser/layout-parser#168](https://github.com/Layout-Parser/layout-parser/issues/168)).
-  `analyze_layout()` will raise a clear `RuntimeError` explaining this rather
-  than an obscure YAML parsing error. Workarounds: supply your own local
-  Detectron2 weights via `LayoutParserBackend(weights_path=...)`, or register
-  an alternative `BaseLayoutBackend`. Table extraction's `method="layout"`
-  fallback path is affected by the same issue when camelot finds no tables.
-- **`extract_fields()`'s table-typed fields** route through the same layout
-  backend, so they're subject to the limitation above until a working layout
-  backend is registered.
-- **`method="tabula"`** in table extraction requires a local Java runtime,
-  which is not bundled — install a JRE if you need this path instead of the
-  default `camelot`.
+- **Layout outage:** LayoutParser's built-in PubLayNet model-zoo URLs currently resolve to deleted Dropbox resources ([upstream issue #168](https://github.com/Layout-Parser/layout-parser/issues/168)). `analyze_layout()` raises an actionable error. This also affects the scanned-table layout+OCR fallback and table-typed fields in `extract_fields()`.
+- **First-page scalar extraction:** `extract_fields()` rasterizes the document but currently supplies page index 0 to the scalar QA model. Fields that exist only on later pages will not be found.
+- **In-memory RAG:** the default vector store is process-local, brute-force, and nonpersistent. Reuse the same embedding model at index and query time. It is intended for prototypes and small corpora.
+- **Scans are not automatically OCRed for RAG:** `index_documents()` uses `parse_document()` text. Build an OCR-to-index path in your application for image-only content.
+- **Table fallback is heuristic:** layout+OCR groups nearby words; it is not robust cell reconstruction. Camelot exceptions may result in fallback behavior.
+- **No legacy `.xls`:** use `.xlsx`, `.xlsm`, CSV, or TSV.
+- **No automatic pipeline:** each function is independently invoked; applications own routing, retries, caching, persistence, and quality thresholds.
 
-## Design notes
+## Testing and release checks
 
-- **Structured extraction uses a QA model, not a generic pretrained checkpoint.**
-  An earlier version used `microsoft/layoutlmv3-base` directly, which turned out
-  to have no fine-tuned classification head (its output labels are generic
-  placeholders), making it structurally incapable of answering arbitrary field
-  questions. `extract_fields()` now uses `impira/layoutlm-document-qa` (a
-  checkpoint fine-tuned for document question-answering) and converts each
-  scalar schema field into a natural-language question, which is what makes
-  zero-shot extraction against arbitrary schemas actually work.
-- All backends are swappable. See `register_parser_backend`,
-  `register_ocr_backend`, `register_layout_backend`,
-  `register_extraction_backend`, `register_llm_client`, and
-  `register_vector_store`.
+The repository contains deterministic unit/format tests plus environment-heavy integration tests that use Tesseract, Camelot, LayoutLM, and sentence-transformers. Counts vary with installed binaries, model cache state, and the known layout outage, so this README does not freeze a pass count.
 
-## Project layout
-
+```bash
+python -m pytest testcases -v
+python -m build
+python -m twine check dist/*
 ```
-docintel_kit/
-├── types.py         # shared Pydantic models: Document, Page, ParseResult,
-│                     # OcrResult, LayoutResult, Table, ExtractionResult,
-│                     # RagSearchResult, ...
-├── parsing.py        # PDF / DOCX / PPTX / HTML / image parsing
-├── ocr.py            # Tesseract-backed OCR
-├── layout.py         # layoutparser-backed layout analysis
-├── tables.py         # camelot / tabula / layout+OCR table extraction
-├── spreadsheet.py     # pandas-backed Excel/CSV parsing
-├── extraction.py      # LayoutLM document-QA structured field extraction
-├── llm_tasks.py       # Claude-backed summarize/classify/table-QA
-└── rag.py             # sentence-transformers embeddings + vector search
-```
+
+CI runs Python 3.11 deterministic tests and package build/twine checks. Model-backed integration tests remain local/environment-dependent until their artifacts can be made reliable in clean runners.
+
+## License
+
+MIT © Kanishk S. See [LICENSE](LICENSE).
