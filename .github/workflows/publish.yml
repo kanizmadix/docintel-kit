@@ -60,6 +60,7 @@ jobs:
             --deselect "testcases/test_ocr.py::TestImageOcr::test_recognizes_form_fields" \
             --deselect "testcases/test_ocr.py::TestImageOcr::test_rotated_text_still_recognized_reasonably" \
             --deselect "testcases/test_tables.py::TestTabulaExtraction" \
+            --deselect "testcases/test_parsing.py::TestPdfParsing::test_unicode_multilingual_text_preserved" \
             -v
           python -m pytest \
             testcases/test_layout.py::TestBackendAbstraction \

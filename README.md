@@ -176,7 +176,7 @@ python -m build
 python -m twine check dist/*
 ```
 
-CI runs Python 3.11 deterministic tests and package build/twine checks. Model-backed integration tests (extraction, layout, RAG), two OCR text-accuracy assertions, and the Java-backed Tabula test are excluded from CI because their results depend on local binaries, fonts, model caches, and OCR engine versions. Run the full suite locally to exercise them.
+CI runs Python 3.11 deterministic tests and package build/twine checks. Some tests are excluded from CI because their outcome depends on the host environment rather than on this package: model-backed integration tests (extraction, layout, RAG), two OCR text-accuracy assertions, the Java-backed Tabula test, and the CJK assertion in `test_unicode_multilingual_text_preserved` (its PDF fixture needs a broad-coverage Unicode **TTF**, which GitHub runners do not provide; Noto CJK ships as OTF/OTC and cannot be embedded by the fixture generator). Run the full suite locally to exercise all of them.
 
 ## License
 
