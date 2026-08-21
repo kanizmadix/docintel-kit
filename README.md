@@ -176,7 +176,7 @@ python -m build
 python -m twine check dist/*
 ```
 
-CI runs Python 3.11 deterministic tests and package build/twine checks. Model-backed integration tests remain local/environment-dependent until their artifacts can be made reliable in clean runners.
+CI runs Python 3.11 deterministic tests and package build/twine checks. Model-backed integration tests (extraction, layout, RAG), two OCR text-accuracy assertions, and the Java-backed Tabula test are excluded from CI because their results depend on local binaries, fonts, model caches, and OCR engine versions. Run the full suite locally to exercise them.
 
 ## License
 

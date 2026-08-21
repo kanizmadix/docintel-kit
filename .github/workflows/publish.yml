@@ -44,7 +44,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes ghostscript poppler-utils tesseract-ocr fonts-dejavu-core
+          sudo apt-get install --yes ghostscript poppler-utils tesseract-ocr fonts-dejavu-core fonts-noto-cjk
 
       - name: Install project and release tools
         run: |
@@ -57,6 +57,9 @@ jobs:
             --ignore=testcases/test_extraction.py \
             --ignore=testcases/test_layout.py \
             --ignore=testcases/test_rag.py \
+            --deselect "testcases/test_ocr.py::TestImageOcr::test_recognizes_form_fields" \
+            --deselect "testcases/test_ocr.py::TestImageOcr::test_rotated_text_still_recognized_reasonably" \
+            --deselect "testcases/test_tables.py::TestTabulaExtraction" \
             -v
           python -m pytest \
             testcases/test_layout.py::TestBackendAbstraction \
